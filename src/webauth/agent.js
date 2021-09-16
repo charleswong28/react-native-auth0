@@ -16,16 +16,20 @@ export default class Agent {
     }
 
     return new Promise((resolve, reject) => {
+      //add variable to store Event
+      let eventURL;
       const urlHandler = event => {
         NativeModules.A0Auth0.hide();
         Linking.removeEventListener('url', urlHandler);
         resolve(event.url);
       };
-      const params =
-        Platform.OS === 'ios' ? [ephemeralSession, closeOnLoad] : [closeOnLoad];
-      if (!skipLegacyListener) Linking.addEventListener('url', urlHandler);
-      NativeModules.A0Auth0.showUrl(url, ...params, (error, redirectURL) => {
-        if (!skipLegacyListener) Linking.removeEventListener('url', urlHandler);
+
+      //set variable with new event
+      eventURL = Linking.addEventListener('url', urlHandler);
+      NativeModules.A0Auth0.showUrl(url, closeOnLoad, (error, redirectURL) => {
+        //use event.remove() method instead of EventEmitter.removeListener('type',...)
+        eventURL.remove();
+        
         if (error) {
           reject(error);
         } else if (redirectURL) {
