@@ -24,12 +24,13 @@ export default class Agent {
         resolve(event.url);
       };
 
-      //set variable with new event
-      eventURL = Linking.addEventListener('url', urlHandler);
-      NativeModules.A0Auth0.showUrl(url, closeOnLoad, (error, redirectURL) => {
-        //use event.remove() method instead of EventEmitter.removeListener('type',...)
-        eventURL.remove();
-        
+      const params =
+        Platform.OS === 'ios' ? [ephemeralSession, closeOnLoad] : [closeOnLoad];
+      if (!skipLegacyListener) {
+        eventURL = Linking.addEventListener('url', urlHandler);
+      }
+      NativeModules.A0Auth0.showUrl(url, ...params, (error, redirectURL) => {
+       if (!skipLegacyListener && eventURL) eventURL.remove();
         if (error) {
           reject(error);
         } else if (redirectURL) {
